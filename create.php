@@ -79,6 +79,7 @@ session_start();
             // Sauvegarder les messages d'erreur en session
             $_SESSION['form_errors']= $errors;
             // Sauvegarder les données précedemment envoyées en session
+            $_SESSION['old']=$postClean;
             
             // Rediriger l'utilisateur vers la page de laquelle proviennent les informations
             // Arrêter l'exécution du script
@@ -120,6 +121,7 @@ session_start();
                         <?php endforeach ?>    
                     </ul>
                 </div>
+                <?php unset($_SESSION['form_errors']); ?>
             <?php  endif ?>    
         <div class="container">
             <div class="row">
@@ -127,19 +129,19 @@ session_start();
                     <form method="post">
                         <div class="mb-3">
                             <label for="name">Le nom du film <span class="text-danger">*</span></label>
-                            <input type="text" name="name" id="name" class="form-control">
+                            <input type="text" name="name" id="name" class="form-control" value="<?php echo isset($_SESSION['old']['name']) ? $_SESSION['old']['name']: "" ; unset($_SESSION['old']['name']); ?>">
                         </div>
                         <div class="mb-3">
                             <label for="actors">Le nom du/des acteurs <span class="text-danger">*</span></label>
-                            <input type="text" name="actors" id="actors" class="form-control">
+                            <input type="text" name="actors" id="actors" class="form-control" value="<?php echo isset($_SESSION['old']['actors']) ? $_SESSION['old']['actors']: "" ;unset($_SESSION['old']['actors']); ?>">
                         </div>
                         <div class="mb-3">
                             <label for="review">La note / 5</label>
-                            <input type="number" min="0" max="5" step=".1" name="review" id="review" class="form-control">
+                            <input type="number" min="0" max="5" step=".1" name="review" id="review" class="form-control" value="<?php echo isset($_SESSION['old']['review']) ? $_SESSION['old']['review']: "" ;unset($_SESSION['old']['review']); ?>">
                         </div>
                         <div class="mb-3">
                             <label for="comment">Laissez un commentaire</label>
-                            <textarea name="comment" id="comment" class="form-control" rows="4"></textarea>
+                            <textarea name="comment" id="comment" class="form-control" rows="4"><?php echo isset($_SESSION['old']['comment']) ? $_SESSION['old']['comment']: "" ; unset($_SESSION['old']['comment']);?></textarea>
                         </div>
                         <div class="mb-3 d-none">
                             <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
