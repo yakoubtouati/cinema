@@ -71,6 +71,20 @@ session_start();
                 $errors['actors'] = "Le nom du/des acteurs ne doit pas dépasser 255 caractères.";
             }
         }
+
+        if ( isset($postClean["review"])){
+            if ( $postClean["review"] !=""){
+                if(!is_numeric($postClean["review"]) ){
+
+                    $errors['review']="La note doit être un nombre";
+                }
+                else if ($postClean["review"]<"0" || $postClean["review"]>"5"){
+
+                    $errors['review']="La note doit être comprise entre 0 et 5 ";
+
+                }
+            }
+        }
         
         // S'il y a des erreurs
         if ( count($errors) > 0 ) 
@@ -90,17 +104,49 @@ session_start();
         // Dans le cas contraire,
         
         // Arrondir la note à un chiffre après la virgule
+
+        if ( isset($postClean['review']) && $postClean['review']!==""){
+            $reviewRounded= round($postClean['review'],1);
+        }
         
         // Etablir une connexion avec la base de données
+        require __DIR__ ."/db/connexion.php";
         
         // Effectuer la requête d'insertion des données en base
-        
+
+        // preparons la requete avant de l'éxécuter afin de nous proteger contre les failes de type "injection de code SQL"
+
+        $req=$db->prepare("INSERT INTO film (name,actors,review,comment,created_at,updated_at) VALUE (:name,:actors,:review,:comment,now(),now())");
+
+        // passons les vraies valeurs 
+        $req->bindValue(":name", $postClean['name']);
+        $req->bindValue(":actors", $postClean['actors']);
+        if (isset($reviewRounded) && $reviewRounded==0)
+        {
+        $req->bindValue(":review", $reviewRounded , PDO::PARAM_INT);
+        }
+        else
+        {
+        $req->bindValue(":review", $reviewRounded);
+        }
+        $req->bindValue(":comment", $postClean['comment']);
+
+        // executer la requete
+        $req->execute();
+
+        // fermons la connexion établie avec la base donnée (non obligatoire)
+        $req->closeCursor();
+
+
         // Créer un message flash de succès
+        $_SESSION['success']="le film a été ajouté avec succés.";
         
         // Rediriger l'utilisateur vers la page d'accueil
         // Arrêter l'exécution du script
+        return header("Location:index.php");
     }
 
+    // générons le jeton de sécurité 
     $_SESSION['csrf_token'] = bin2hex(random_bytes(30));
 
     
@@ -137,7 +183,7 @@ session_start();
                         </div>
                         <div class="mb-3">
                             <label for="review">La note / 5</label>
-                            <input type="number" min="0" max="5" step=".1" name="review" id="review" class="form-control" value="<?php echo isset($_SESSION['old']['review']) ? $_SESSION['old']['review']: "" ;unset($_SESSION['old']['review']); ?>">
+                            <input  type="number" min="0" max="5" step=".1" name="review" id="review" class="form-control" value="<?php echo isset($_SESSION['old']['review']) ? $_SESSION['old']['review']: "" ;unset($_SESSION['old']['review']); ?>">
                         </div>
                         <div class="mb-3">
                             <label for="comment">Laissez un commentaire</label>

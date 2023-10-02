@@ -20,3 +20,9 @@ body{
     display: grid;
     grid-template-rows: auto 1fr auto;
 }
+.card{
+    border-radius: 20px;
+} 
+.card:hover{
+    transform: scale(1.1);
+} 
