@@ -1,7 +1,52 @@
 <?php
 session_start();
-//  var_dump($_SERVER);
-    // Mon serveur
+
+// si l'identifiant du film a modifier n'existe pas ou sa valeur est vide 
+
+if ( !isset($_GET['film_id']) || empty($_GET['film_id'])  ){
+
+    // rediriger l'utilisateur vers la page d'accueil
+    // puis arreter l'éxecution de script 
+    return header("Location:index.php");
+
+}
+
+// dans le cas contraire 
+
+    // protéger le serveur contre les failes de type xss 
+    $filmId =(int) htmlspecialchars($_GET['film_id']);
+
+    // Etablir une connexion avec la bas de données 
+    require __DIR__ ."/db/connexion.php";
+
+    // effectuer la requete permettent du séléctionner le film dont l'identifiant a été récupéré depuis l'url 
+
+    $req=$db->prepare("SELECT * FROM film WHERE id=:id");
+
+    $req->bindValue(":id",$filmId);
+
+    $req->execute();
+
+    // compte le nombre d'enregistrement  récupéré de la base 
+    $row=$req->rowCount();
+    
+    // si ce nombre n'est pas égal a 1 , c'est que film n'éxiste pas 
+    if ( $row !=1){
+        // rediriger l'utilisateur vers la page d'accueil 
+        // puis arréter l'éxécution du script 
+
+        return header("Location:index.php");
+    }
+
+    // dans le cas contraire 
+        // récuperons les données de ce film afin de les afficher dans le formulaire de modification 
+        $film = $req->fetch();
+
+
+
+
+
+
 
     // Si les données arrivent au serveur via la méthode POST
     if ( $_SERVER['REQUEST_METHOD'] === "POST" )
@@ -116,7 +161,7 @@ session_start();
 
         // preparons la requete avant de l'éxécuter afin de nous proteger contre les failes de type "injection de code SQL"
 
-        $req=$db->prepare("INSERT INTO film (name,actors,review,comment,created_at,updated_at) VALUE (:name,:actors,:review,:comment,now(),now())");
+       $req = $db->prepare("UPDATE film  SET name=:name, actors=:actors, review=:review,comment=:comment,updated_at=now() WHERE id=:id");
 
         // passons les vraies valeurs 
         $req->bindValue(":name", $postClean['name']);
@@ -130,6 +175,7 @@ session_start();
         $req->bindValue(":review", $reviewRounded);
         }
         $req->bindValue(":comment", $postClean['comment']);
+        $req->bindValue(":id", $film['id']);
 
         // executer la requete
         $req->execute();
@@ -139,7 +185,7 @@ session_start();
 
 
         // Créer un message flash de succès
-        $_SESSION['success']="le film a été ajouté avec succés.";
+        $_SESSION['success']="le film a été modifier avec succés.";
         
         // Rediriger l'utilisateur vers la page d'accueil
         // Arrêter l'exécution du script
@@ -158,7 +204,7 @@ session_start();
 
     <!-- Le contenu spécifique à la page -->
     <main class="container my-5">
-        <h1 class="text-center my-3 display-5">Nouveau film</h1>
+        <h1 class="text-center my-3 display-5">Modifier ce film</h1>
             <?php if (isset ($_SESSION['form_errors']) && !empty($_SESSION['form_errors'])) :  ?>
                 <div class="alert alert-danger text-center" >
                     <ul>
@@ -175,19 +221,19 @@ session_start();
                     <form method="post">
                         <div class="mb-3">
                             <label for="name">Le nom du film <span class="text-danger">*</span></label>
-                            <input type="text" name="name" id="name" class="form-control" value="<?php echo isset($_SESSION['old']['name']) ? stripslashes($_SESSION['old']['name']): "" ; unset($_SESSION['old']['name']); ?>">
+                            <input type="text" name="name" id="name" class="form-control" value="<?php echo isset($_SESSION['old']['name']) ? $_SESSION['old']['name']: $film['name'] ; unset($_SESSION['old']['name']); ?>">
                         </div>
                         <div class="mb-3">
                             <label for="actors">Le nom du/des acteurs <span class="text-danger">*</span></label>
-                            <input type="text" name="actors" id="actors" class="form-control" value="<?php echo isset($_SESSION['old']['actors']) ? stripslashes($_SESSION['old']['actors']): "" ;unset($_SESSION['old']['actors']); ?>">
+                            <input type="text" name="actors" id="actors" class="form-control" value="<?php echo isset($_SESSION['old']['actors']) ? $_SESSION['old']['actors']: $film['actors']  ;unset($_SESSION['old']['actors']); ?>">
                         </div>
                         <div class="mb-3">
                             <label for="review">La note / 5</label>
-                            <input  type="number" min="0" max="5" step=".1" name="review" id="review" class="form-control" value="<?php echo isset($_SESSION['old']['review']) ? stripslashes($_SESSION['old']['review']): "" ;unset($_SESSION['old']['review']); ?>">
+                            <input  type="number" min="0" max="5" step=".1" name="review" id="review" class="form-control" value="<?php echo isset($_SESSION['old']['review']) ? $_SESSION['old']['review']: $film['review']  ;unset($_SESSION['old']['review']); ?>">
                         </div>
                         <div class="mb-3">
                             <label for="comment">Laissez un commentaire</label>
-                            <textarea name="comment" id="comment" class="form-control" rows="4"><?php echo isset($_SESSION['old']['comment']) ? stripslashes($_SESSION['old']['comment']): "" ; unset($_SESSION['old']['comment']);?></textarea>
+                            <textarea name="comment" id="comment" class="form-control" rows="4"><?php echo isset($_SESSION['old']['comment']) ? $_SESSION['old']['comment']: $film['comment']  ; unset($_SESSION['old']['comment']);?></textarea>
                         </div>
                         <div class="mb-3 d-none">
                             <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
@@ -196,7 +242,7 @@ session_start();
                             <input type="hidden" name="honey_pot" value="">
                         </div>
                         <div>
-                            <input type="submit" class="btn btn-primary" value="Créer">
+                            <input type="submit" class="btn btn-primary" value="Modifier">
                         </div>
                     </form>
                 </div>
