@@ -38,7 +38,7 @@ include __DIR__ . "/partials/nav.php"
 
 
     <div class="d-flex justify-content-end align-items-center my-3">
-        <a href="create.php" class="btn btn-primary"> Nouveau ajouter</a>
+        <a href="create.php" class="btn btn-primary"> Nouveau Film</a>
     </div>
         <?php if (count($films)>0) : ?>
         <div class="container">
